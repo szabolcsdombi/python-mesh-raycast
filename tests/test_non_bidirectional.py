@@ -4,7 +4,7 @@ import pytest
 import mesh_raycast
 
 
-def test_multiple_results():
+def test_non_bidirectional():
     triangles = np.array([
         [0.0, 0.0, 0.0],
         [4.0, 0.0, 0.0],
