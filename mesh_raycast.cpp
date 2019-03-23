@@ -31,7 +31,8 @@ PyObject * meth_reflect(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
-    Py_RETURN_NONE;
+    glm::vec3 result = glm::reflect(vector, normal);
+    return Py_BuildValue("fff", result.x, result.y, result.z);
 }
 
 PyObject * meth_refract(PyObject * self, PyObject * args, PyObject * kwargs) {
@@ -45,7 +46,8 @@ PyObject * meth_refract(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
-    Py_RETURN_NONE;
+    glm::vec3 result = glm::refract(vector, normal, eta);
+    return Py_BuildValue("fff", result.x, result.y, result.z);
 }
 
 PyObject * meth_normalize(PyObject * self, PyObject * args, PyObject * kwargs) {
@@ -57,7 +59,8 @@ PyObject * meth_normalize(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
-    Py_RETURN_NONE;
+    glm::vec3 result = glm::normalize(vector);
+    return Py_BuildValue("fff", result.x, result.y, result.z);
 }
 
 PyObject * meth_direction(PyObject * self, PyObject * args, PyObject * kwargs) {
@@ -70,7 +73,8 @@ PyObject * meth_direction(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
-    Py_RETURN_NONE;
+    glm::vec3 result = glm::normalize(target - source);
+    return Py_BuildValue("fff", result.x, result.y, result.z);
 }
 
 PyMethodDef module_methods[] = {
