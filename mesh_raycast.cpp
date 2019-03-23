@@ -6,6 +6,10 @@
 
 #define v_xyz(obj) &obj.x, &obj.y, &obj.z
 
+inline glm::vec3 & vertex(void * ptr, int stride, int idx) {
+    return *(glm::vec3 *)(((char *)ptr) + stride * idx);
+}
+
 PyObject * meth_raycast(PyObject * self, PyObject * args, PyObject * kwargs) {
     static char * keywords[] = {"source", "direction", "mesh", "stride", NULL};
 
@@ -18,8 +22,51 @@ PyObject * meth_raycast(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
+    if (mesh.len % (stride * 3)) {
+        PyErr_Format(PyExc_ValueError, "stride error");
+        return 0;
+    }
+
+    glm::vec3 d = -glm::normalize(direction);
+    PyObject * res = PyList_New(0);
+
+    int num_triangles = (int)(mesh.len / (stride * 3));
+
+    for (int i = 0; i < num_triangles; ++i) {
+        const glm::vec3 a = vertex(mesh.buf, stride, i * 3);
+        const glm::vec3 b = vertex(mesh.buf, stride, i * 3 + 1) - a;
+        const glm::vec3 c = vertex(mesh.buf, stride, i * 3 + 2) - a;
+        const glm::vec3 g = source - a;
+
+        const float det = glm::determinant(glm::mat3(b, c, d));
+        if (!det) {
+            continue;
+        }
+
+        const float n = glm::determinant(glm::mat3(g, c, d)) / det;
+        const float m = glm::determinant(glm::mat3(b, g, d)) / det;
+        const float k = glm::determinant(glm::mat3(b, c, g)) / det;
+
+        if (n >= 0.0f && m >= 0.0f && n + m <= 1.0f && k >= 0.0f) {
+            const glm::vec3 pt = source + direction * k;
+            const glm::vec3 norm = glm::normalize(glm::cross(b, c));
+            const float dot = glm::dot(d, norm);
+
+            PyObject * match = Py_BuildValue(
+                "{sis(fff)s(fff)s(fff)sf}",
+                "face", i,
+                "point", pt.x, pt.y, pt.z,
+                "normal", norm.x, norm.y, norm.z,
+                "coeff", n, m, k,
+                "dot", dot
+            );
+            PyList_Append(res, match);
+            Py_DECREF(match);
+        }
+    }
+
     PyBuffer_Release(&mesh);
-    Py_RETURN_NONE;
+    return res;
 }
 
 PyObject * meth_iraycast(PyObject * self, PyObject * args, PyObject * kwargs) {
