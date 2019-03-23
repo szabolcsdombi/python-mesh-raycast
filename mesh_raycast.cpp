@@ -11,13 +11,14 @@ PyObject * meth_raycast(PyObject * self, PyObject * args, PyObject * kwargs) {
 
     glm::vec3 source;
     glm::vec3 direction;
-    Py_buffer view;
+    Py_buffer mesh;
     int stride = sizeof(glm::vec3);
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "(fff)(fff)y*|i", keywords, v_xyz(source), v_xyz(direction), &view, stride)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "(fff)(fff)y*|i", keywords, v_xyz(source), v_xyz(direction), &mesh, stride)) {
         return 0;
     }
 
+    PyBuffer_Release(&mesh);
     Py_RETURN_NONE;
 }
 
