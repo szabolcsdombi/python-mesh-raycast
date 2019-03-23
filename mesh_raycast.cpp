@@ -53,11 +53,12 @@ PyObject * meth_raycast(PyObject * self, PyObject * args, PyObject * kwargs) {
             const float dot = glm::dot(d, norm);
 
             PyObject * match = Py_BuildValue(
-                "{sis(fff)s(fff)s(fff)sf}",
+                "{sis(fff)s(fff)s(ff)sfsf}",
                 "face", i,
                 "point", pt.x, pt.y, pt.z,
                 "normal", norm.x, norm.y, norm.z,
-                "coeff", n, m, k,
+                "coeff", n, m,
+                "distance", k,
                 "dot", dot
             );
             PyList_Append(res, match);
