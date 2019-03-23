@@ -83,9 +83,54 @@ PyObject * meth_iraycast(PyObject * self, PyObject * args, PyObject * kwargs) {
         return 0;
     }
 
+    if (mesh.len % (stride * 3)) {
+        PyErr_Format(PyExc_ValueError, "stride error");
+        return 0;
+    }
+
+    glm::vec3 d = -glm::normalize(direction);
+    PyObject * res = PyList_New(0);
+
+    int num_triangles = (int)(index.len / sizeof(glm::ivec3));
+    glm::ivec3 * triangles = (glm::ivec3 *)index.buf;
+
+    for (int i = 0; i < num_triangles; ++i) {
+        const glm::vec3 a = vertex(mesh.buf, stride, triangles[i].x);
+        const glm::vec3 b = vertex(mesh.buf, stride, triangles[i].y) - a;
+        const glm::vec3 c = vertex(mesh.buf, stride, triangles[i].z) - a;
+        const glm::vec3 g = source - a;
+
+        const float det = glm::determinant(glm::mat3(b, c, d));
+        if (!det) {
+            continue;
+        }
+
+        const float n = glm::determinant(glm::mat3(g, c, d)) / det;
+        const float m = glm::determinant(glm::mat3(b, g, d)) / det;
+        const float k = glm::determinant(glm::mat3(b, c, g)) / det;
+
+        if (n >= 0.0f && m >= 0.0f && n + m <= 1.0f && k >= 0.0f) {
+            const glm::vec3 pt = source + direction * k;
+            const glm::vec3 norm = glm::normalize(glm::cross(b, c));
+            const float dot = glm::dot(d, norm);
+
+            PyObject * match = Py_BuildValue(
+                "{sis(fff)s(fff)s(ff)sfsf}",
+                "face", i,
+                "point", pt.x, pt.y, pt.z,
+                "normal", norm.x, norm.y, norm.z,
+                "coeff", n, m,
+                "distance", k,
+                "dot", dot
+            );
+            PyList_Append(res, match);
+            Py_DECREF(match);
+        }
+    }
+
     PyBuffer_Release(&index);
     PyBuffer_Release(&mesh);
-    Py_RETURN_NONE;
+    return res;
 }
 
 PyObject * meth_reflect(PyObject * self, PyObject * args, PyObject * kwargs) {
