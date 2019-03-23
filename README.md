@@ -1,6 +1,6 @@
 # python-mesh-raycast
 
-A simple module to calculate mesh normals for python.
+Ray-casting on meshes for python.
 
 ## Install
 
